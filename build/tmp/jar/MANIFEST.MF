@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Build-Date: 2019-11-14 14:49:01
+Built-By: ThingWorx EMEA-RO PRESALES IOT
+
+Name: Kafka_Extension
+Package-Version: 1.0-SNAPSHOT
+Package-Title: Kafka Extension
+Package-Vendor: ThingWorx EMEA-RO PRESALES IOT
+
