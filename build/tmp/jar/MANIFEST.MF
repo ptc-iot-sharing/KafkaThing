@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Build-Date: 2019-11-14 14:49:01
+Build-Date: 2019-11-18 15:45:21
 Built-By: ThingWorx EMEA-RO PRESALES IOT
 
 Name: Kafka_Extension

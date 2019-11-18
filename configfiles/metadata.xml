@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><Entities>
   <ExtensionPackages>
-    <ExtensionPackage name="Kafka_Extensions" description="Kafka Extensions" vendor="ThingWorx EMEA-RO PRESALES IOT" packageVersion="1.0.86" minimumThingWorxVersion="8.0.0">
+    <ExtensionPackage name="Kafka_Extensions" description="Kafka Extensions" vendor="ThingWorx EMEA-RO PRESALES IOT" packageVersion="1.0.91" minimumThingWorxVersion="8.0.0">
       <JarResources/>
     </ExtensionPackage>
   </ExtensionPackages>

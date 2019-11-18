@@ -6,9 +6,16 @@
 package com.thingworx.things.kafka;
 
 import ch.qos.logback.classic.Logger;
+import com.thingworx.data.util.InfoTableInstanceFactory;
+import com.thingworx.datashape.DataShape;
+import com.thingworx.entities.utils.EntityUtilities;
 import com.thingworx.logging.LogUtilities;
 import com.thingworx.metadata.annotations.*;
+import com.thingworx.relationships.RelationshipTypes;
 import com.thingworx.things.Thing;
+import com.thingworx.types.BaseTypes;
+import com.thingworx.types.InfoTable;
+import com.thingworx.types.collections.ValueCollection;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -69,7 +76,7 @@ public class KafkaThing
         extends Thing {
     protected static final Logger _Logger = LogUtilities.getInstance().getApplicationLogger(KafkaThing.class);
 
-    //twx conf page
+    //twx default config
     private String _serverName = "localhost:9092";
     private String _clientID = "client1";
     private String _topicName = "demo";
@@ -102,17 +109,15 @@ public class KafkaThing
         _Logger.info("Started the Kafka Extension for Thingworx");
     }
 
-    @ThingworxServiceDefinition(name = "sendReceiveMessage", description = "")
+    @ThingworxServiceDefinition(name = "runConnectivityTest", description = "")
     @ThingworxServiceResult(name = "result", description = "", baseType = "STRING")
-    public String sendReceiveMessage(@ThingworxServiceParameter(name = "Topic name", description = "at least one field must be defined as string", baseType = "STRING") String topic1)
+    public String runConnectivityTest(@ThingworxServiceParameter(name = "Topic name", description = "at least one field must be defined as string", baseType = "STRING") String topic1)
             throws Exception {
         _Logger.info("Start auto");
 
-        //force set
-        GROUP_ID_CONFIG = this._groupID;
-        KAFKA_BROKERS = this._serverName;
+        initContainerArgs();
 
-        ContainerProperties containerProps = new ContainerProperties("topic1", "topic2");
+        ContainerProperties containerProps = new ContainerProperties(topic1);
         containerProps.setClientId(_clientID);
         containerProps.setGroupId(_groupID);
         containerProps.setMissingTopicsFatal(false);
@@ -133,16 +138,122 @@ public class KafkaThing
         Thread.sleep(1000); // wait a bit for the container to start
         KafkaTemplate<Integer, String> template = createTemplate();
         template.setDefaultTopic(topic1);
-        template.sendDefault(0, "foo");
-        template.sendDefault(2, "bar");
-        template.sendDefault(0, "baz");
-        template.sendDefault(2, "qux");
+        template.sendDefault(0, "Test Message 1");
+        template.sendDefault(2, "Test Message 2");
+        template.sendDefault(0, "Test Message 3");
+        template.sendDefault(2, "Test Message 4");
         template.flush();
         //assertTrue(latch.await(60, TimeUnit.SECONDS));
         latch.await(60, TimeUnit.SECONDS);
         container.stop();
         _Logger.info("Stop auto");
         return "Test Complete";
+    }
+
+    @ThingworxServiceDefinition(name = "sendMessage", description = "Publish a message to a Kafka topic")
+    @ThingworxServiceResult(name = "result", description = "", baseType = "STRING")
+    public String sendMessage(@ThingworxServiceParameter(name = "Topic name", description = "A topic is a category or feed name to which records are published", baseType = "STRING") String topic,
+                              @ThingworxServiceParameter(name = "Message", description = "Content to be published under a topic", baseType = "STRING") String message,
+                              @ThingworxServiceParameter(name = "Message Key", description = "The key associated with the message", baseType = "NUMBER") Double key)
+            throws Exception {
+        if (key == null) {
+            key = new Double(1.0D);
+        }
+        if (topic == null) {
+            topic = _topicName;
+        }
+        if (message == null) {
+            message = "Empty Message body";
+        }
+
+        _Logger.info("Start sending message");
+
+        initContainerArgs();
+
+        ContainerProperties containerProps = new ContainerProperties(topic);
+        containerProps.setClientId(_clientID);
+        containerProps.setGroupId(_groupID);
+        containerProps.setMissingTopicsFatal(false);
+        containerProps.setMessageListener(new MessageListener<Integer, String>() {
+            @Override
+            public void onMessage(ConsumerRecord<Integer, String> message) {
+                _Logger.info("received: " + message);
+            }
+        });
+        KafkaMessageListenerContainer<Integer, String> container = createContainer(containerProps);
+        container.setBeanName("kafkaProducer");
+        container.start();
+        Thread.sleep(1000); // wait a bit for the container to start
+        KafkaTemplate<Integer, String> template = createTemplate();
+        template.setDefaultTopic(topic);
+        template.sendDefault(key.intValue(), message);
+        template.flush();
+
+        container.stop();
+        _Logger.info("Finished sending message");
+        return "Message Sent";
+    }
+
+    @ThingworxServiceDefinition(name = "receiveMessages", description = "Subscribe to messages from a Kafka topic")
+    @ThingworxServiceResult(
+            name = "result",
+            description = "Result",
+            baseType = "INFOTABLE"
+    )
+    public InfoTable receiveMessages(@ThingworxServiceParameter(name = "Topic name", description = "A topic is a category or feed name to which records are published", baseType = "STRING") String topic,
+                                     @ThingworxServiceParameter(name = "Message Table Datashape", description = "Data shape for the returned results", baseType = "DATASHAPENAME") String dataShape,
+                                     @ThingworxServiceParameter(name = "Maximum Messages Count", description = "Maximum messages to return in the InfoTable", baseType = "NUMBER") Double maxItems,
+                                     @ThingworxServiceParameter(name = "Consumer Group Name", description = "Name for the Kafka consumer group", baseType = "STRING") String group)
+            throws Exception {
+        if (maxItems == null) {
+            maxItems = new Double(50.0D);
+        }
+        DataShape ds = (DataShape) EntityUtilities.findEntity(dataShape, RelationshipTypes.ThingworxRelationshipTypes.DataShape);
+        if (ds == null) {
+            throw new Exception("Could not continue because the Datashape does not exist, or a Datashape was not specified [" + dataShape + "]");
+        } else {
+            InfoTable it = InfoTableInstanceFactory.createInfoTableFromDataShape(ds.getDataShape());
+            _Logger.info("Starting listening for messages");
+
+            initContainerArgs();
+
+            final CountDownLatch latch = new CountDownLatch(maxItems.intValue());
+            ContainerProperties containerProps = new ContainerProperties(topic);
+            containerProps.setClientId(_clientID);
+            containerProps.setGroupId(group);
+            containerProps.setMissingTopicsFatal(false);
+            containerProps.setMessageListener(new MessageListener<Integer, String>() {
+
+                @Override
+                public void onMessage(ConsumerRecord<Integer, String> message) {
+                    _Logger.info("received: " + message);
+
+                    ValueCollection values = new ValueCollection();
+                    try {
+                        values.put("value", BaseTypes.ConvertToPrimitive(message.value(), BaseTypes.STRING ));
+                        values.put("key", BaseTypes.ConvertToPrimitive(message.key(), BaseTypes.STRING ));
+                        values.put("offset", BaseTypes.ConvertToPrimitive(message.offset(), BaseTypes.STRING ));
+                        values.put("headers", BaseTypes.ConvertToPrimitive(message.headers(), BaseTypes.STRING ));
+                        latch.countDown();
+                    } catch (Exception e) {
+                        _Logger.info("Could not insert value into infotable");
+                    }
+                    it.addRow(values);
+
+                }
+
+            });
+            KafkaMessageListenerContainer<Integer, String> container = createContainer(containerProps);
+            container.setBeanName("kafkaConsumer");
+            container.start();
+            _Logger.info("Started listening for messages");
+            latch.await(60, TimeUnit.SECONDS);
+            container.stop();
+            _Logger.info("Finished listening for messages");
+
+            return it;
+        }
+
     }
 
     private KafkaMessageListenerContainer<Integer, String> createContainer(
@@ -185,6 +296,11 @@ public class KafkaThing
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         return props;
+    }
+
+    private void initContainerArgs () {
+        GROUP_ID_CONFIG = this._groupID;
+        KAFKA_BROKERS = this._serverName;
     }
 
     protected static class ConfigConstants {
