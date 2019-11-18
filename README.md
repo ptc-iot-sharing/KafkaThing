@@ -34,13 +34,18 @@ It is based on [kafka-docker](https://github.com/wurstmeister/kafka-docker). For
 
 To view the status of the Kafka server, it may be useful to install [Kafka-Manager](https://github.com/yahoo/kafka-manager), this will allow you to create topics and verify that the server is alive. You must have at least one topic defined in order for the test to complete. 
 
-Once you have imported the extension into Thingworx, use the KafkaThing Template to create a Thing. On the configuration page, for the serverName, specify the hostname or IP address and the port for the Kafka server (not the Zookeeper). Navigate to the Services section of the Thing and run **sendReceiveMessage**. Specify a topic name (that you have previously set up), then Execute. If a successful connection is made the result will be 'Test Complete', and it will only take 1-2 seconds to execute. In the Monitoring section of Thingworx, in the Application Log you should see something like:
+Once you have imported the extension into Thingworx, use the KafkaThing Template to create a Thing. On the configuration page, for the serverName, specify the hostname or IP address and the port for the Kafka server (not the Zookeeper).  
 
- `received: ConsumerRecord(topic = topic1, partition = 0, leaderEpoch = 0, offset = 2, CreateTime = 1573806098140, serialized key size = 4, serialized value size = 3, headers = RecordHeaders(headers = [], isReadOnly = false), key = 0, value = baz)`  
+### Services
 
+Navigate to the Services section of the Thing and you can run: 
 
-
- This extension is pre-release and not intended to be used in a production environment at this stage.
+* **runConnectivityTest**. Specify a topic name (that you have previously set up), then Execute. If a successful connection is made the result will be 'Test Complete', and it will only take 1-2 seconds to execute. In the Monitoring section of Thingworx, in the Application Log you should see something like:
+```
+received: ConsumerRecord(topic = topic1, partition = 0, leaderEpoch = 0, offset = 2, CreateTime = 1573806098140, serialized key size = 4, serialized value size = 3, headers = RecordHeaders(headers = [], isReadOnly = false), key = 0, value = baz) 
+```
+* **sendMessage**. Specify a topic name, a message content(i.e. "Hello from TWX") and optionally a message key (integer).  Execute to send the message to the server.
+* **receiveMessages**. Specify a topic name, the datashape(download and import into Thingworx [kafkaConsumer](https://github.com/ptc-iot-sharing/KafkaThing/tree/master/twx) datashape), a maximum amount of messages to wait for before returning the infotable, and a consumer group name. This service returns an infotable with the messages received (up to when the max message count is reached). The infotable returned contains value, key, offset, and headers as STRING objects.
 
 
 ## Online Documentation
