@@ -53,6 +53,8 @@ received: ConsumerRecord(topic = topic1, partition = 0, leaderEpoch = 0, offset 
 This README file only contains basic setup instructions.  For more
 comprehensive documentation, visit:
 
-- Kafka Documentation:  https://kafka.apache.org/documentation/ 
-- Spring Kafka:   https://docs.spring.io/spring-kafka/docs/current/reference/html/#introduction 
-- Kafka Clients:  https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients 
+* [Basic Overview of Kafka](https://www.cloudkarafka.com/blog/2016-11-30-part1-kafka-for-beginners-what-is-apache-kafka.html)
+
+- [Kafka Documentation](https://kafka.apache.org/documentation/)   
+- [Spring Kafka](https://docs.spring.io/spring-kafka/docs/current/reference/html/#introduction)
+- [Kafka Clients](https://docs.spring.io/spring-kafka/docs/current/reference/html/#introduction)
