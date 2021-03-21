@@ -9,6 +9,7 @@ Download the extension package from
 https://github.com/ptc-iot-sharing/KafkaThing/releases/download/1.0.91/KafkaExtensions.zip
 
 
+**Description**
 
 An extension that allows you to send and receive messages from a Kafka server. 
 
