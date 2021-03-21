@@ -1,3 +1,11 @@
+**Disclaimer**
+
+This repository is provided "AS-IS" with **no warranty or support** given. This is not an official or supported product/use case. 
+
+Download the extension package from
+
+https://github.com/ptc-iot-sharing/KafkaThing/releases/download/1.0.91/KafkaExtensions.zip
+
 # KafkaThing
 
 An extension that allows you to send and receive messages from a Kafka server. 
