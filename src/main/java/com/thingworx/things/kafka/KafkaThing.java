@@ -114,7 +114,7 @@ public class KafkaThing
     public String runConnectivityTest(@ThingworxServiceParameter(name = "Topic name", description = "at least one field must be defined as string", baseType = "STRING") String topic1)
             throws Exception {
         _Logger.info("Start auto");
-
+        initializeThing();
         initContainerArgs();
 
         ContainerProperties containerProps = new ContainerProperties(topic1);
@@ -167,7 +167,7 @@ public class KafkaThing
         }
 
         _Logger.info("Start sending message");
-
+        initializeThing();
         initContainerArgs();
 
         ContainerProperties containerProps = new ContainerProperties(topic);
@@ -214,7 +214,7 @@ public class KafkaThing
         } else {
             InfoTable it = InfoTableInstanceFactory.createInfoTableFromDataShape(ds.getDataShape());
             _Logger.info("Starting listening for messages");
-
+            initializeThing();
             initContainerArgs();
 
             final CountDownLatch latch = new CountDownLatch(maxItems.intValue());
